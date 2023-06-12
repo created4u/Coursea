@@ -7,6 +7,182 @@
 
 import SwiftUI
 
+struct SelectCourseItem: View {
+    
+    let course: Course
+    let account: String
+    
+    @State private var choose: Bool = false
+    
+    func update() async {
+        let userManager = UserManager()
+        
+        await userManager.updateStudentStudyingCoursesInfo(account: account, studyingCourses: course.id)
+    }
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .frame(height: 120)
+                .foregroundColor(choose ? .red : .indigo)
+                .onTapGesture {
+                    choose.toggle()
+                    Task {
+                        await update()
+                    }
+                }
+            
+            VStack(alignment: .leading) {
+                HStack {
+                    Label(course.name, systemImage: "graduationcap.circle.fill")
+                        .padding([.top, .leading, .trailing], 3.0)
+                    Spacer()
+                }
+                Label(course.teach_by, systemImage: "person.fill")
+                    .padding(.all, 3.0)
+                Label(course.must_choose ? "Compulsory Course" : "Elective Course", systemImage: "exclamationmark.circle.fill")
+                    .padding([.leading, .bottom, .trailing], 3.0)
+            }
+            .padding(.horizontal)
+            .frame(maxWidth: .infinity)
+            .frame(height: 120)
+            .font(.headline)
+            .foregroundColor(.white)
+        }
+    }
+}
+
+struct DeleteCourseItem: View {
+    
+    let course: Course
+    let account: String
+    
+    @State private var choose: Bool = false
+    
+    func update() async {
+        let userManager = UserManager()
+        
+        await userManager.removeStudentStudyingCoursesInfo(account: account, studyingCourses: course.id)
+    }
+    
+    func getAlert() -> Alert {
+        return Alert(title: Text("Are you sure to remove this course?"))
+    }
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .frame(height: 120)
+                .foregroundColor(choose ? .red : .indigo)
+                .onTapGesture {
+                    choose.toggle()
+                    Task {
+                        await update()
+                    }
+                }
+            
+            VStack(alignment: .leading) {
+                HStack {
+                    Label(course.name, systemImage: "graduationcap.circle.fill")
+                        .padding([.top, .leading, .trailing], 3.0)
+                    Spacer()
+                }
+                Label(course.teach_by, systemImage: "person.fill")
+                    .padding(.all, 3.0)
+                Label(course.must_choose ? "Compulsory Course" : "Elective Course", systemImage: "exclamationmark.circle.fill")
+                    .padding([.leading, .bottom, .trailing], 3.0)
+            }
+            .padding(.horizontal)
+            .frame(maxWidth: .infinity)
+            .frame(height: 120)
+            .font(.headline)
+            .foregroundColor(.white)
+        }
+        .alert(isPresented: $choose) {
+            getAlert()
+        }
+    }
+}
+
+struct AddCourse: View {
+    
+    let account: String
+    
+    @State private var coursesArray: [Course] = []
+    @State private var alreadyHave: [String] = []
+    @State private var student: Student = Student(first_name: "", last_name: "", gender: "", birth_date: Date(), account: "", major: "", phone_number: "", passed_courses: [], studying_courses: [])
+    
+    func initCourses() async {
+        let userManager = UserManager()
+        
+        userManager.getAllCourses() { results in
+            self.coursesArray = results
+        }
+        
+        student = await userManager.getStudent(account: account)
+        
+        for courseID in student.passed_courses {
+            alreadyHave.append(courseID)
+        }
+        
+        for courseID in student.studying_courses {
+            alreadyHave.append(courseID)
+        }
+    }
+    
+    var body: some View {
+        VStack {
+            ForEach(coursesArray, id: \.self) { course in
+                if alreadyHave.contains(where: {$0 == course.id}) {
+                    
+                } else {
+                    SelectCourseItem(course: course, account: account)
+                }
+            }
+            Spacer()
+        }
+        .padding(.all)
+        .onAppear {
+            Task {
+                await initCourses()
+            }
+        }
+    }
+}
+
+struct RemoveCourse: View {
+    
+    let account: String
+    
+    @State private var coursesArray: [Course] = []
+    @State private var student: Student = Student(first_name: "", last_name: "", gender: "", birth_date: Date(), account: "", major: "", phone_number: "", passed_courses: [], studying_courses: [])
+    
+    func initCourses() async {
+        let userManager = UserManager()
+        
+        student = await userManager.getStudent(account: account)
+        
+        userManager.getStudyingCoursesInfo(coursesID: student.studying_courses) { results in
+            self.coursesArray = results
+        }
+    }
+    
+    var body: some View {
+        VStack {
+            ForEach(coursesArray, id: \.self) { course in
+                DeleteCourseItem(course: course, account: account)
+            }
+            Spacer()
+        }
+        .padding(.all)
+        .onAppear {
+            Task {
+                await initCourses()
+            }
+        }
+    }
+}
+
 struct OriginalView: View {
     
     private let orignialHeight: CGFloat = 120
@@ -76,10 +252,14 @@ struct CourseDetailsView: View {
 
 struct CoursesView: View {
     
-    @State private var coursesNumber: Int = 0
+    //@State private var coursesNumber: Int = 0
     @State private var student: Student = Student(first_name: "", last_name: "", gender: "", birth_date: Date(), account: "", major: "", phone_number: "", passed_courses: [], studying_courses: [])
     @State private var account: String = ""
     @State private var coursesArray: [Course] = []
+    @State private var showAddCourse: Bool = false
+    @State private var showRemoveCourse: Bool = false
+    @State private var studyingCoursesString: [String] = []
+    @State private var passedCoursesString: [String] = []
     
     let icons = [
         "graduationcap",
@@ -94,16 +274,23 @@ struct CoursesView: View {
         let authManager = AuthenticationManager()
         let userManager = UserManager()
         
-        coursesNumber = 0
+        //coursesNumber = 0
         coursesArray.removeAll()
         
         do {
             account = try authManager.getAuthenticatedUser().email ?? "nil"
             student = await userManager.getStudent(account: account)
-            coursesNumber = student.studying_courses.count - 1
-            for i in 0...coursesNumber {
-                print(student.studying_courses[i])
-                await coursesArray.append(userManager.getStudyingCoursesInfo(courseID: student.studying_courses[i]))
+            
+            for singleCourse in student.studying_courses {
+                var thisCourse = await userManager.getSingleStudyingCoursesInfo(courseID: singleCourse)
+                if thisCourse.graded {
+                    await userManager.removeStudentStudyingCoursesInfo(account: student.account, studyingCourses: singleCourse)
+                    await userManager.addStudentPassedCoursesInfo(account: student.account, passedCourse: singleCourse)
+                }
+            }
+            
+            userManager.getStudyingCoursesInfo(coursesID: student.studying_courses) { results in
+                self.coursesArray = results
             }
         } catch {
             print("Get initial info failed... [ CoursesView.swift -> CoursesView ]")
@@ -126,13 +313,17 @@ struct CoursesView: View {
                 .toolbar {
                     Menu(
                         content: {
-                            Button(action: {},label: {
+                            Button(action: {
+                                showAddCourse.toggle()
+                            },label: {
                                 Image(systemName: icons[3])
                                 Text("Add Course")
                             })
                             .buttonStyle(.borderedProminent)
                             
-                            Button(action: {},label: {
+                            Button(action: {
+                                showRemoveCourse.toggle()
+                            },label: {
                                 HStack{
                                     Image(systemName: icons[4])
                                     Text("Remove Course")
@@ -155,6 +346,12 @@ struct CoursesView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showAddCourse) {
+            AddCourse(account: account)
+        }
+        .sheet(isPresented: $showRemoveCourse) {
+            RemoveCourse(account: account)
         }
     }
 }

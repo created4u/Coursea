@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import FirebaseCore
 import FirebaseFirestore
 import FirebaseFirestoreSwift
 
@@ -61,9 +60,11 @@ final class UserManager {
             teacher = try await doc.getDocument().data(as: Teacher.self)
         } catch {
             print("Get teacher failed... [ FirestoreManager.swift -> getTeacher ]")
+            print(error)
         }
         
         print("Hope it works...")
+        print("THIS IS ACCOUNT \(account)")
         print(teacher)
         return teacher
     }
@@ -71,7 +72,7 @@ final class UserManager {
     func updateBasicInfo(account: String, birthDate: Date, phoneNumber: String) {
         
         let db = Firestore.firestore()
-        let doc = db.collection("teacher").document(account)
+        let doc = db.collection("student").document(account)
         
         doc.updateData([
             "birth_date": birthDate,
@@ -85,8 +86,84 @@ final class UserManager {
         }
     }
     
+    // grade the ungraded course
+    func gradeCourse(ID: String, grades: [String : Float]) {
+        
+        let db = Firestore.firestore()
+        let doc = db.collection("courses").document(ID)
+        
+        doc.updateData([
+            "studentsAndGPA": grades,
+            "graded": true
+        ]) { err in
+            if err != nil {
+                print("Update failed... [ FirestoreManager.swift -> gradeCourse ]")
+            } else {
+                print("Updated... [ FirestoreManager.swift -> gradeCourse ]")
+            }
+        }
+        
+    }
+    
+    func updateTeacherBasicInfo(account: String, phoneNumber: String) {
+        
+        let db = Firestore.firestore()
+        let doc = db.collection("teacher").document(account)
+        
+        doc.updateData([
+            "phone_number": phoneNumber
+        ]) { err in
+            if err != nil {
+                print("Update failed... [ FirestoreManager.swift -> updateTeacherBasicInfo ]")
+            } else {
+                print("Updated... [ FirestoreManager.swift -> updateTeacherBasicInfo ]")
+            }
+        }
+    }
+    
+    // add new course from teacher
+    func teacherAddNewCourse(course: Course) {
+        
+        let db = Firestore.firestore()
+        
+        do {
+            try db.collection("temp_courses").document(course.id).setData(from: course)
+        } catch {
+            print("A new temp course adds successfully... [ FirestoreManager.swift -> teacherAddNewCourse ]")
+        }
+    }
+    
+    // change the GPA
+    func correctGPAForStudents(gradeDict: [String : Float], ID: String) {
+        
+        let db = Firestore.firestore()
+        
+        do {
+            try db.collection("temp_grade").document(ID).setData(gradeDict)
+        } catch {
+            print("The new grade has been submitted... [ FirestoreManager.swift -> correctGPAForStudents ]")
+        }
+    }
+    
     // get studying courses
-    func getStudyingCoursesInfo(courseID: String) async -> Course {
+    func getSingleStudyingCoursesInfo(courseID: String) async -> Course {
+
+        let db = Firestore.firestore()
+        let doc = db.collection("courses").document(courseID)
+
+        var course: Course = Course(belong_to: "", teach_by: "", name: "", id: "", start_class: 0, end_class: 0, start_week: 0, end_week: 0, place: "", credit: 0, max_person: 0, choose_person: 0, must_choose: false, studentsAndGPA: [ : ], canBeCreated: false, canChangeGPA: false, graded: false)
+
+        do {
+            course = try await doc.getDocument().data(as: Course.self)
+        } catch {
+            print("\(error) Get studying courses failed... [ FirestoreManager.swift -> UserManager -> getSingleStudyingCoursesInfo ]")
+        }
+
+        return course
+    }
+    
+    // get teacher taught courses
+    func getTeacherTaughtCoursesInfo(courseID: String) async -> Course {
         
         let db = Firestore.firestore()
         let doc = db.collection("courses").document(courseID)
@@ -96,28 +173,140 @@ final class UserManager {
         do {
             course = try await doc.getDocument().data(as: Course.self)
         } catch {
-            print("\(error) Get studying courses failed... [FirestoreManager.swift -> UserManager -> getStudyingCoursesInfo ]")
+            print("\(error) Get studying courses failed... [ FirestoreManager.swift -> UserManager -> getTeacherTaughtCoursesInfo ]")
         }
    
         return course
     }
     
-    // get passed courses
-    func getPassedCoursesInfo(courseID: String) async -> Course {
+    // get those courses that haven't been approved by the admin
+    func getUnapprovedCourses(account: String, completion: @escaping([Course]) -> Void) {
+        
+        print("===== [1] Main body of the function ===== \n")
         
         let db = Firestore.firestore()
-        let doc = db.collection("courses").document(courseID)
+        var coursesArray: [Course] = []
         
-        var course: Course = Course(belong_to: "", teach_by: "", name: "", id: "", start_class: 0, end_class: 0, start_week: 0, end_week: 0, place: "", credit: 0, max_person: 0, choose_person: 0, must_choose: false, studentsAndGPA: [ : ], canBeCreated: false, canChangeGPA: false, graded: false)
-        
-        do {
-            course = try await doc.getDocument().data(as: Course.self)
-        } catch {
-            print("\(error) Get passed courses failed... [FirestoreManager.swift -> UserManager -> getPassedCoursesInfo ]")
-        }
-   
-        return course
+        db.collection("temp_courses").whereField("teach_by", isEqualTo: account)
+            .getDocuments() { (querySnapshot, err) in
+                for document in querySnapshot!.documents {
+                    do {
+                        let singleCourse: Course = try document.data(as: Course.self)
+                        print("===== [2] Append an element ===== \n")
+                        coursesArray.append(singleCourse)
+                    } catch {
+                        print("Place A error... [ FirestoreManager.swift -> UserManager -> getUnapprovedCourses ]")
+                    }
+                    print("\(document.documentID) => \(document.data())")
+                }
+                completion(coursesArray)
+            }
     }
+    
+    // get all courses
+    func getAllCourses(completion: @escaping([Course]) -> Void) {
+        
+        print("===== [1] Main body of the function ===== \n")
+        
+        let db = Firestore.firestore()
+        var coursesArray: [Course] = []
+        
+        db.collection("courses").getDocuments() { (querySnapshot, err) in
+                for document in querySnapshot!.documents {
+                    do {
+                        let singleCourse: Course = try document.data(as: Course.self)
+                        print("===== [2] Append an element ===== \n")
+                        coursesArray.append(singleCourse)
+                    } catch {
+                        print("Place A error... [ FirestoreManager.swift -> UserManager -> getAllCourses ]")
+                    }
+                    print("\(document.documentID) => \(document.data())")
+                }
+                completion(coursesArray)
+            }
+    }
+    
+    // remove the course
+    func removeUnapprovedCourses(ID: String) {
+        
+        let db = Firestore.firestore()
+        
+        db.collection("temp_courses").document(ID).delete() { err in
+            if let err = err {
+                print("Place A error... [ FirestoreManager.swift -> UserManager -> removeUnapprovedCourses ]")
+            } else {
+                print("Document successfully removed!")
+            }
+        }
+    }
+    
+    // get passed courses
+//    func getPassedCoursesInfo(courseID: String) async -> Course {
+//
+//        let db = Firestore.firestore()
+//        let doc = db.collection("courses").document(courseID)
+//
+//        var course: Course = Course(belong_to: "", teach_by: "", name: "", id: "", start_class: 0, end_class: 0, start_week: 0, end_week: 0, place: "", credit: 0, max_person: 0, choose_person: 0, must_choose: false, studentsAndGPA: [ : ], canBeCreated: false, canChangeGPA: false, graded: false)
+//
+//        do {
+//            course = try await doc.getDocument().data(as: Course.self)
+//        } catch {
+//            print("\(error) Get passed courses failed... [FirestoreManager.swift -> UserManager -> getPassedCoursesInfo ]")
+//        }
+//
+//        return course
+//    }
+    func getPassedCoursesInfo(coursesID: [String], completion: @escaping([Course]) -> Void) {
+        
+        print("===== [1] Main body of the function ===== \n")
+        
+        let db = Firestore.firestore()
+        var coursesArray: [Course] = []
+        
+        for ID in coursesID {
+            db.collection("courses").whereField("id", isEqualTo: ID)
+                .getDocuments() { (querySnapshot, err) in
+                    for document in querySnapshot!.documents {
+                        do {
+                            let singleCourse: Course = try document.data(as: Course.self)
+                            print("===== [2] Append an element ===== \n")
+                            coursesArray.append(singleCourse)
+                        } catch {
+                            print("Place A error... [ FirestoreManager.swift -> UserManager -> getPassedCoursesInfo ]")
+                        }
+                        print("\(document.documentID) => \(document.data())")
+                    }
+                    completion(coursesArray)
+                }
+        }
+    }
+    
+    
+    func getStudyingCoursesInfo(coursesID: [String], completion: @escaping([Course]) -> Void) {
+        
+        print("===== [1] Main body of the function ===== \n")
+        
+        let db = Firestore.firestore()
+        var coursesArray: [Course] = []
+        
+        for ID in coursesID {
+            db.collection("courses").whereField("id", isEqualTo: ID)
+                .getDocuments() { (querySnapshot, err) in
+                    for document in querySnapshot!.documents {
+                        do {
+                            let singleCourse: Course = try document.data(as: Course.self)
+                            print("===== [2] Append an element ===== \n")
+                            coursesArray.append(singleCourse)
+                        } catch {
+                            print("Place A error... [ FirestoreManager.swift -> UserManager -> getStudyingCoursesInfo ]")
+                        }
+                        print("\(document.documentID) => \(document.data())")
+                    }
+                    completion(coursesArray)
+                }
+        }
+    }
+    
     
     // add a passed course
     func updateStudentPassedCoursesInfo(account: String, passedCourses: String) async {
@@ -181,25 +370,75 @@ final class UserManager {
         } catch {
             print("Get studying courses failed... [FirestoreManager.swift -> UserManager -> updateStudentStudyingCoursesInfo ]")
         }
-        
-        var position: Int = 0
-        
-        if originalStudyingCourses[position] != studyingCourses {
-            position += 1
-        }
-        
-        originalStudyingCourses.remove(at: position)
+        originalStudyingCourses.removeAll(where: {$0 == studyingCourses})
         
         doc.updateData([
             "studying_courses": originalStudyingCourses
         ]) { err in
             if err != nil {
-                print("Update failed... [ FirestoreManager.swift -> UserManager -> removeStudentStudyingCoursesInfo ]")
+                print("Update failed... [ FirestoreManager.swift -> UserManager -> updateStudentStudyingCoursesInfo ]")
             } else {
-                print("Updated... [ FirestoreManager.swift -> UserManager -> removeStudentStudyingCoursesInfo ]")
+                print("Updated... [ FirestoreManager.swift -> UserManager -> updateStudentStudyingCoursesInfo ]")
             }
         }
     }
+    
+    // add a passed course
+    func addStudentPassedCoursesInfo(account: String, passedCourse: String) async {
+        
+        let db = Firestore.firestore()
+        let doc = db.collection("student").document(account)
+        var originalPassedCourses: [String] = []
+        
+        do {
+            originalPassedCourses = try await doc.getDocument().data(as: Student.self).passed_courses
+        } catch {
+            print("Get studying courses failed... [FirestoreManager.swift -> UserManager -> addStudentPassedCoursesInfo ]")
+        }
+        originalPassedCourses.append(passedCourse)
+        
+        doc.updateData([
+            "passed_courses": originalPassedCourses
+        ]) { err in
+            if err != nil {
+                print("Update failed... [ FirestoreManager.swift -> UserManager -> addStudentPassedCoursesInfo ]")
+            } else {
+                print("Updated... [ FirestoreManager.swift -> UserManager -> addStudentPassedCoursesInfo ]")
+            }
+        }
+    }
+    
+    // remove a studying course
+//    func removeStudentStudyingCoursesInfo(account: String, studyingCourses: String) async {
+//
+//        let db = Firestore.firestore()
+//        let doc = db.collection("student").document(account)
+//        var originalStudyingCourses: [String] = []
+//
+//        do {
+//            originalStudyingCourses = try await doc.getDocument().data(as: Student.self).studying_courses
+//        } catch {
+//            print("Get studying courses failed... [FirestoreManager.swift -> UserManager -> updateStudentStudyingCoursesInfo ]")
+//        }
+//
+//        var position: Int = 0
+//
+//        if originalStudyingCourses[position] != studyingCourses {
+//            position += 1
+//        }
+//
+//        originalStudyingCourses.remove(at: position)
+//
+//        doc.updateData([
+//            "studying_courses": originalStudyingCourses
+//        ]) { err in
+//            if err != nil {
+//                print("Update failed... [ FirestoreManager.swift -> UserManager -> removeStudentStudyingCoursesInfo ]")
+//            } else {
+//                print("Updated... [ FirestoreManager.swift -> UserManager -> removeStudentStudyingCoursesInfo ]")
+//            }
+//        }
+//    }
 
     // add a certain course taught by teacher
     func updateTeacherTaughtCoursesInfo(account: String, taughtCourses: String) async {
@@ -231,32 +470,14 @@ final class UserManager {
     func removeTeacherTaughtCoursesInfo(account: String, taughtCourses: String) async {
         
         let db = Firestore.firestore()
-        let doc = db.collection("teacher").document(account)
-        var originalTaughtCourses: [String] = []
-        
-        do {
-            originalTaughtCourses = try await doc.getDocument().data(as: Teacher.self).courses_taught
-        } catch {
-            print("Get studying courses failed... [FirestoreManager.swift -> UserManager -> updateStudentStudyingCoursesInfo ]")
-        }
-        
-        var position: Int = 0
-        
-        if originalTaughtCourses[position] != taughtCourses {
-            position += 1
-        }
-        
-        originalTaughtCourses.remove(at: position)
-        
-        doc.updateData([
-            "taught_courses": originalTaughtCourses
-        ]) { err in
-            if err != nil {
-                print("Update failed... [ FirestoreManager.swift -> UserManager -> removeTeacherTaughtCoursesInfo ]")
+        let doc = db.collection("temp_courses").document(account).delete() { err in
+            if let err = err {
+                print("Error removing document: \(err)")
             } else {
-                print("Updated... [ FirestoreManager.swift -> UserManager -> removeTeacherTaughtCoursesInfo ]")
+                print("Document successfully removed! [ FirestoreManager.swift -> UserManager -> removeTeacherTaughtCoursesInfo ]")
             }
         }
     }
+    
     
 }

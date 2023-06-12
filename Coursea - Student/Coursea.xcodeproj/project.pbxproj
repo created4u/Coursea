@@ -23,9 +23,8 @@
 		68757EC82A10B65B00C0D0E1 /* Entrance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68757EC72A10B65B00C0D0E1 /* Entrance.swift */; };
 		6886A3402A0FC0D00019BDD1 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6886A33F2A0FC0D00019BDD1 /* AuthenticationManager.swift */; };
 		68992BBC2A0CB7E000BF30D9 /* CourseaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68992BBB2A0CB7E000BF30D9 /* CourseaApp.swift */; };
-		68992BC02A0CB7E200BF30D9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 68992BBF2A0CB7E200BF30D9 /* Assets.xcassets */; };
-		68992BC32A0CB7E200BF30D9 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 68992BC22A0CB7E200BF30D9 /* Preview Assets.xcassets */; };
 		689E46362A121BBC00AA195E /* FirebaseFirestoreSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 689E46352A121BBC00AA195E /* FirebaseFirestoreSwift */; };
+		68AF99232A1B44FB00DF71C9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 68AF99222A1B44FB00DF71C9 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,8 +40,7 @@
 		6886A33F2A0FC0D00019BDD1 /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
 		68992BB82A0CB7E000BF30D9 /* Coursea.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Coursea.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		68992BBB2A0CB7E000BF30D9 /* CourseaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseaApp.swift; sourceTree = "<group>"; };
-		68992BBF2A0CB7E200BF30D9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		68992BC22A0CB7E200BF30D9 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		68AF99222A1B44FB00DF71C9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,24 +124,15 @@
 		68992BBA2A0CB7E000BF30D9 /* Coursea */ = {
 			isa = PBXGroup;
 			children = (
+				68AF99222A1B44FB00DF71C9 /* Assets.xcassets */,
 				684D812B2A14BEEE00A87DF3 /* Database */,
 				684D812A2A14BECC00A87DF3 /* Logic */,
 				684D81292A14BEA800A87DF3 /* UI */,
 				684D81282A14BE8A00A87DF3 /* Auth */,
 				681017B52A0E63B600EC918A /* GoogleService-Info.plist */,
 				68992BBB2A0CB7E000BF30D9 /* CourseaApp.swift */,
-				68992BBF2A0CB7E200BF30D9 /* Assets.xcassets */,
-				68992BC12A0CB7E200BF30D9 /* Preview Content */,
 			);
 			path = Coursea;
-			sourceTree = "<group>";
-		};
-		68992BC12A0CB7E200BF30D9 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				68992BC22A0CB7E200BF30D9 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -215,9 +204,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				68992BC32A0CB7E200BF30D9 /* Preview Assets.xcassets in Resources */,
-				68992BC02A0CB7E200BF30D9 /* Assets.xcassets in Resources */,
 				681017B62A0E63B700EC918A /* GoogleService-Info.plist in Resources */,
+				68AF99232A1B44FB00DF71C9 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -248,6 +236,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -308,6 +297,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -361,17 +351,20 @@
 		68992BC72A0CB7E200BF30D9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = indigo_app_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Coursea/Preview Content\"";
 				DEVELOPMENT_TEAM = WUX46X736G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -391,17 +384,20 @@
 		68992BC82A0CB7E200BF30D9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = indigo_app_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Coursea/Preview Content\"";
 				DEVELOPMENT_TEAM = WUX46X736G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;

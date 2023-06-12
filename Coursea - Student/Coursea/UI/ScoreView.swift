@@ -22,7 +22,7 @@ struct CourseItem: View {
         displayChartData.removeAll()
         
         for level in levels {
-            var count = course.studentsAndGPA.filter({$0.value == level}).count
+            let count = course.studentsAndGPA.filter({$0.value == level}).count
             displayChartData.append(ScoreData(level: level, number: count))
         }
         
@@ -44,7 +44,7 @@ struct CourseItem: View {
         .onAppear {
             calculate()
         }
-        .font(.headline)
+        .font(.body)
         .sheet(isPresented: $showAnalysis) {
             ChartsView(myGPA: course.studentsAndGPA[studentName] ?? 0, data: $displayChartData)
                 .presentationDetents([.fraction(0.6)])
@@ -117,7 +117,6 @@ struct ChartsView: View {
 
 struct ScoreView: View {
     
-    @State private var coursesNumber = 0
     @State private var account: String = ""
     @State private var student: Student = Student(first_name: "", last_name: "", gender: "", birth_date: Date(), account: "", major: "", phone_number: "", passed_courses: [], studying_courses: [])
     @State private var coursesArray: [Course] = []
@@ -131,18 +130,14 @@ struct ScoreView: View {
         let authManager = AuthenticationManager()
         let userManager = UserManager()
         
-        coursesNumber = 0
         coursesArray.removeAll()
         
         do {
             account = try authManager.getAuthenticatedUser().email ?? "nil"
             student = await userManager.getStudent(account: account)
-            coursesNumber = student.studying_courses.count - 1
-            for i in 0...coursesNumber {
-                await coursesArray.append(userManager.getPassedCoursesInfo(courseID: student.passed_courses[i]))
+            userManager.getPassedCoursesInfo(coursesID: student.passed_courses) { results in
+                self.coursesArray = results
             }
-            
-            //print("This is viewArray \(viewArray),\nThis is coursesArray \(coursesArray[0]), and count is \(coursesArray.count),\nThis is coursesSet \(coursesSet)")
         } catch {
             print("Get initial info failed... [ ScoreView.swift -> ScoreView ]")
         }
@@ -169,7 +164,6 @@ struct ScoreView: View {
     var body: some View {
         NavigationStack{
             Form {
-                
                 Section("Passed Courses") {
                     ForEach(coursesArray, id: \.self) { singleCourse in
                         CourseItem(course: singleCourse, studentName: account)
@@ -205,6 +199,9 @@ struct ScoreView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.indigo)
                     }
+                }
+                .onTapGesture {
+                    calculate()
                 }
                 .headerProminence(.increased)
                 
